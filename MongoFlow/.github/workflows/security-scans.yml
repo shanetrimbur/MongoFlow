@@ -1,0 +1,28 @@
+name: Security Scans
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Run every Sunday at midnight
+  workflow_dispatch:     # Allow manual triggering
+
+jobs:
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=medium
+
+      - name: Run Checkov for IaC scanning
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: iac/
+          soft_fail: false
+          framework: terraform,cloudformation

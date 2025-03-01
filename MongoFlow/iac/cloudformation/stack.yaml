@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'MongoFlow - AWS Resources for MongoDB Atlas CI/CD Pipeline'
+
+Parameters:
+  MongoDBUri:
+    Type: String
+    Description: MongoDB Atlas connection string URI
+    NoEcho: true
+  
+  Environment:
+    Type: String
+    Description: Deployment environment
+    Default: production
+    AllowedValues:
+      - development
+      - staging
+      - production
+
+Resources:
+  # API Gateway for backend services
+  MongoFlowApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: MongoFlow API
+      Description: API Gateway for MongoFlow backend services
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # Python Service Lambda Function
+  PythonServiceLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: mongoflow-python-service
+      Handler: app.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python3.10
+      Timeout: 30
+      MemorySize: 128
+      Environment:
+        Variables:
+          MONGODB_URI: !Ref MongoDBUri
+          ENVIRONMENT: !Ref Environment
+
+  # Additional resources omitted for brevity
+
+Outputs:
+  ApiEndpoint:
+    Description: URL of the API Gateway endpoint
+    Value: !Sub https://${MongoFlowApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}
